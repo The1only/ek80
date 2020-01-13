@@ -8,9 +8,10 @@ The xml files ar config files.
 Usage:
 
 pip install t9ek80
-git clone 
-cd . /examples
+git clone https://github.com/The1only/ek80.git
+cd ./ek80/examples
 python biomass.py config2.xml
+
 
 PS: All testing has been done using python3 and pip3 
 
