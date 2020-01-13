@@ -7,7 +7,12 @@ The xml files ar config files.
 
 Usage:
 
-python3 biomass.py config2.xml
+pip install t9ek80
+git clone 
+cd . /examples
+python biomass.py config2.xml
+
+PS: All testing has been done using python3 and pip3 
 
 The Simrad EK80 user manual can be found at: https://www.simrad.online/ek80/ref_en/default.htm
 
