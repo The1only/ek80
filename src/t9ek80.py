@@ -66,6 +66,7 @@ class t9ek80:
         self.finale_data = b""
         self.mtype = ""
         self.running = 0
+        self.totalbytes = 0
         
         config = "config.xml"
 
@@ -368,7 +369,7 @@ class t9ek80:
             else:
                 print("EK80 error...")
                 
-            data = sock.recv(65000)
+            data = sock.recv(64000)
                 
         self.running = 5
         msg = bytearray(b'DIS\0Name:Simrad;Password:\0')
@@ -398,7 +399,7 @@ class t9ek80:
         self.running = 1
         
         while self.running <= 2:
-            data = datasock.recv(6000)
+            data = datasock.recv(20000)
             Decode = unpack('<4siiHHH',data[0:18])
             
             if DEBUG == True:
@@ -411,6 +412,7 @@ class t9ek80:
                 print("NoOfBytes:  {:d}".format(Decode[5]))
 
             self.finale_data = self.finale_data+data[18:]
+            self.totalbytes = self.totalbytes + Decode[5]
 
             if Decode[4] == Decode[3]:
                 
@@ -429,16 +431,17 @@ class t9ek80:
                                 print("Value:     {:f}".format(elements))
                         
                 else:
-                    Payload = unpack("<Q"+self.mtypeName,self.finale_data[0:Decode[5]])
+                    Payload = unpack("<Q"+self.mtypeName,self.finale_data[0:self.totalbytes])
                     timenow = datetime.datetime.utcfromtimestamp((Payload[0]/10000000)- 11644473600).strftime('%Y-%m-%dT%H:%M:%SZ')
                     
-                    if DEBUG == True:
-                        for element in Payload:
-                            print("Value:     {:f}".format(element))
+                    # if DEBUG == True:
+                        # for element in Payload:
+                            # print("Value:     {:f}".format(element))
                 
                 self.report(Payload,Decode, timenow, self.mtype, self.desimate)
 
                 self.finale_data = b""
+                self.totalbytes = 0
           
         self.running = 4
         datasock.settimeout(None)
@@ -463,7 +466,7 @@ class t9ek80:
         self.running = 1
         
         while self.running <= 2:
-            data = datasock.recv(5000)
+            data = datasock.recv(20000)
             self.NMEAdecode(data)
 
         print("NMEA Closed...")
@@ -481,7 +484,7 @@ class t9ek80:
         sock.connect((self.UDP_IP, self.UDP_PORT))
         sock.settimeout(5.0)
         sock.send('RSI\0'.encode())  # Send reset...
-        data = sock.recv(2024)
+        data = sock.recv(8000)
 
         # Print status so far....
         print('Unit: ', data[4:8])
