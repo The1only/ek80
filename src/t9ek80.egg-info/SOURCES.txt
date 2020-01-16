@@ -1,0 +1,8 @@
+README.md
+ek80
+setup.py
+t9ek80.py
+t9ek80.egg-info/PKG-INFO
+t9ek80.egg-info/SOURCES.txt
+t9ek80.egg-info/dependency_links.txt
+t9ek80.egg-info/top_level.txt

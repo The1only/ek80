@@ -398,7 +398,7 @@ class t9ek80:
         self.running = 1
         
         while self.running <= 2:
-            data = datasock.recv(65000)
+            data = datasock.recv(6000)
             Decode = unpack('<4siiHHH',data[0:18])
             
             if DEBUG == True:
@@ -463,7 +463,7 @@ class t9ek80:
         self.running = 1
         
         while self.running <= 2:
-            data = datasock.recv(65000)
+            data = datasock.recv(5000)
             self.NMEAdecode(data)
 
         print("NMEA Closed...")
@@ -481,7 +481,7 @@ class t9ek80:
         sock.connect((self.UDP_IP, self.UDP_PORT))
         sock.settimeout(5.0)
         sock.send('RSI\0'.encode())  # Send reset...
-        data = sock.recv(1024)
+        data = sock.recv(2024)
 
         # Print status so far....
         print('Unit: ', data[4:8])
