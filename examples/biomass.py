@@ -8,8 +8,8 @@ import sys
 import t9ek80
 
 class ek80(t9ek80.t9ek80):
-    def __init__(self):
-        super(ek80, self).__init__()
+    def __init__(self, argv):
+        super(ek80, self).__init__(argv)
 
 #----------------------------------------------------------------------------
 #   Method       report
@@ -21,9 +21,10 @@ class ek80(t9ek80.t9ek80):
         if mtype == "Biomass":
             print("Bimass: {:f}  at time: {:s}".format(Payload[1],timenow))
             
-#----------------------------------------------------------------------------
+#-----------------------------------------------------------------------------
 # The main code....
-run = ek80()
-run.main(sys.argv)
+run = ek80(sys.argv)
+run.main()
+print("Done!")
 
 

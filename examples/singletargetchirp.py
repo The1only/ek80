@@ -8,8 +8,8 @@ import sys
 import t9ek80
 
 class ek80(t9ek80.t9ek80):
-    def __init__(self):
-        super(ek80, self).__init__()
+    def __init__(self, argv):
+        super(ek80, self).__init__(argv)
 
 #----------------------------------------------------------------------------
 #   Method       report
@@ -26,9 +26,17 @@ class ek80(t9ek80.t9ek80):
                 print("Time:    {:s}   Depth:   {:f}   Forward: {:f}   Side:    {:f}   Sa:      {:f}"\
                     .format(timenow,element[0],element[3],element[4],element[5]))
 
-#----------------------------------------------------------------------------
+        if mtype == "SingleTarget":
+            print("------------------------------")
+            print("SingleTarget");
+            for element in Payload:
+                print("Time:    {:s}   Depth:   {:f}   Forward: {:f}   Side:    {:f}   Sa:      {:f}"\
+                    .format(timenow,element[0],element[3],element[4],element[5]))
+
+#-----------------------------------------------------------------------------
 # The main code....
-run = ek80()
-run.main(sys.argv)
+run = ek80(sys.argv)
+run.main()
+print("Done!")
 
 

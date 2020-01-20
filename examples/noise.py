@@ -19,23 +19,14 @@ class ek80(t9ek80.t9ek80):
 #                It receives a list for parameters and meta data to process...
 #-----------------------------------------------------------------------------
     def report(self, Payload, Decode, timenow, mtype, desimate):
-        # If biomass mode...
+        # If NoiseSpectrum mode...
         if mtype == "NoiseSpectrum":
             plt.clf()
-            
-#            print(len(Payload))
             t = np.arange(0.0, len(Payload)-1, 1)
-            
-            #for i in range(1,len(Payload)-1):
-            #    print("Time:    {:f}   Noise:   {:f} ".format(t[i],Payload[i]))
-                
-
             plt.plot(t,Payload[1:])
             plt.rcParams['axes.unicode_minus'] = True
             plt.title('About as simple as it gets, folks')
             plt.pause(0.05)
-
-            #plt.show()
             
 #----------------------------------------------------------------------------
 # The main code....
