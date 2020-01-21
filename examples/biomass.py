@@ -10,6 +10,8 @@ import t9ek80
 class ek80(t9ek80.t9ek80):
     def __init__(self, argv):
         super(ek80, self).__init__(argv)
+        self.lat  = 10.492231
+        self.lon  = 59.375803
 
 #----------------------------------------------------------------------------
 #   Method       report
@@ -19,7 +21,29 @@ class ek80(t9ek80.t9ek80):
     def report(self, Payload, Decode, timenow, mtype, desimate):
         # If biomass mode...
         if mtype == "Biomass":
-            print("Bimass: {:f}  at time: {:s}".format(Payload[1],timenow))
+            print("Bimass: {:f} at time: {:s} at location: lat: {:d} lon: {:d}".format(Payload[1],timenow, self.lat,self.lon))
+
+#----------------------------------------------------------------------------
+#    Method       EK80_data
+#   Description   The NMEA subscription data handler...
+#-----------------------------------------------------------------------------
+    def NMEAdecode(self,data):
+
+        # Only parse position...
+        if data[0:6].decode() == "$INGLL":
+            info = data.decode().split(",")
+            
+            x = float(info[1])
+            d = math.floor(x / 100)
+            m = ( math.floor(x)-(d*100))/60
+            s = ((x-math.floor(x))*100)/3600
+            self.lon = d+m+s
+
+            y = float(info[3])
+            d = math.floor(y / 100)
+            m = ( math.floor(y)-(d*100))/60
+            s = ((y-math.floor(y))*100)/3600
+            self.lat = d+m+s
             
 #-----------------------------------------------------------------------------
 # The main code....
