@@ -68,7 +68,9 @@ class t9ek80:
         self.running = 0
         self.totalbytes = 0
         
-        config = "config.xml"
+        self.config = "config.xml"
+
+        self.busy = 0
 
         # count the arguments
         print("Initializes config file: "+argv[1])
@@ -125,7 +127,7 @@ class t9ek80:
             print("Missing interface module...")
 
 
-    def NMEAdecode(data):
+    def NMEAdecode(self,data):
         if DEBUG == True:
             print("Missing NMEA interface module...")
 
@@ -398,50 +400,60 @@ class t9ek80:
         print('EK80data  listening on port:', self.UDP_DATA)
         self.running = 1
         
+        # Data can in some case be received in frame sets, we then need to make shure that we start with the first frame in the set.
+        # Some time we are a bit slow hens the Busy structure...
         while self.running <= 2:
             data = datasock.recv(20000)
             Decode = unpack('<4siiHHH',data[0:18])
             
-            if DEBUG == True:
-                print("\n\rHeader:     ".format(Decode[0].decode('utf-8')))
-                print(Decode[0])
-                print("SeqNo:      {:d}".format(Decode[1]))
-                print("SubID:      {:d}".format(Decode[2]))
-                print("CurrentMsg: {:d}".format(Decode[3]))
-                print("TotalMsg:   {:d}".format(Decode[4]))
-                print("NoOfBytes:  {:d}".format(Decode[5]))
+            if self.busy == 0 and Decode[4] == Decode[3]:
+                self.busy = 2 # Ready from next...
+            else:    
+                self.finale_data = self.finale_data+data[18:]
+                self.totalbytes = self.totalbytes + Decode[5]
 
-            self.finale_data = self.finale_data+data[18:]
-            self.totalbytes = self.totalbytes + Decode[5]
-
-            if Decode[4] == Decode[3]:
-                
-                if self.itypeSize > 0:
-                    tmp = unpack("<Q"+self.mtypeName,self.finale_data[0:10])
-                    timenow = datetime.datetime.utcfromtimestamp((tmp[0]/10000000)- 11644473600).strftime('%Y-%m-%dT%H:%M:%SZ')
+                if Decode[4] == Decode[3]:
+                    self.busy = 1  #Busy...
                     
-                    Payload = []
-                    if tmp[1] > 0:
-                        for loop in range(0,tmp[1]):
-                            Payload.append(unpack("<"+self.itypeVal,self.finale_data[10+(loop*self.itypeSize):10+(loop*self.itypeSize)+self.itypeSize]))
+                    if DEBUG == True:
+                        print("\n\rHeader:     ".format(Decode[0].decode('utf-8')))
+                        print(Decode[0])
+                        print("SeqNo:      {:d}".format(Decode[1]))
+                        print("SubID:      {:d}".format(Decode[2]))
+                        print("CurrentMsg: {:d}".format(Decode[3]))
+                        print("TotalMsg:   {:d}".format(Decode[4]))
+                        print("NoOfBytes:  {:d}".format(Decode[5]))
+                
+                    if self.itypeSize > 0:
+                        tmp = unpack("<Q"+self.mtypeName,self.finale_data[0:10])
+                        timenow = datetime.datetime.utcfromtimestamp((tmp[0]/10000000)- 11644473600).strftime('%Y-%m-%dT%H:%M:%SZ')
+                        self.finale_data = self.finale_data[10:]
+                        Payload = []
+                        if tmp[1] > 0:
+                            for loop in range(0,tmp[1]):
+                                start = loop*self.itypeSize
+                                end = (loop*self.itypeSize)+self.itypeSize
+                                dta = self.finale_data[start:end]
+                                Payload.append(unpack("<"+self.itypeVal,self.finale_data[start:end]))
+                                
+                        if DEBUG == 2:
+                            for element in Payload:
+                                for elements in element:
+                                    print("Value:     {:f}".format(elements))
                             
-                    if DEBUG == 2:
-                        for element in Payload:
-                            for elements in element:
-                                print("Value:     {:f}".format(elements))
+                    else:
+                        Payload = unpack("<Q"+self.mtypeName,self.finale_data[0:self.totalbytes])
+                        timenow = datetime.datetime.utcfromtimestamp((Payload[0]/10000000)- 11644473600).strftime('%Y-%m-%dT%H:%M:%SZ')
                         
-                else:
-                    Payload = unpack("<Q"+self.mtypeName,self.finale_data[0:self.totalbytes])
-                    timenow = datetime.datetime.utcfromtimestamp((Payload[0]/10000000)- 11644473600).strftime('%Y-%m-%dT%H:%M:%SZ')
+                        # if DEBUG == True:
+                            # for element in Payload:
+                                # print("Value:     {:f}".format(element))
                     
-                    # if DEBUG == True:
-                        # for element in Payload:
-                            # print("Value:     {:f}".format(element))
-                
-                self.report(Payload,Decode, timenow, self.mtype, self.desimate)
+                    self.report(Payload,Decode, timenow, self.mtype, self.desimate)
 
-                self.finale_data = b""
-                self.totalbytes = 0
+                    self.finale_data = b""
+                    self.totalbytes = 0
+                    self.busy = 0  # Ready to find next header...
           
         self.running = 4
         datasock.settimeout(None)
@@ -458,20 +470,29 @@ class t9ek80:
         if DEBUG == True:
             print("Setting up NMEA")
             
-        datasock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        datasock.bind(("0.0.0.0", int(self.NMEA_DATA)))
-        self.NMEA_DATA = datasock.getsockname()[1]
-        datasock.settimeout(120.0)
-        print('NMEA listening on port:', self.NMEA_DATA)
-        self.running = 1
-        
-        while self.running <= 2:
-            data = datasock.recv(20000)
-            self.NMEAdecode(data)
+        if int(self.NMEA_DATA) > 0:
+            datasock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            datasock.bind(("0.0.0.0", int(self.NMEA_DATA)))
+            self.NMEA_DATA = datasock.getsockname()[1]
+            datasock.settimeout(120.0)
+            print('NMEA listening on port:', self.NMEA_DATA)
+            self.running = 1
+            data = b""
 
-        print("NMEA Closed...")
-        datasock.settimeout(None)
-        datasock.close()
+            while self.running <= 2:
+                try:
+                    data = datasock.recv(20000)
+                except socket.timeout:
+                    print ("No Responce from NMEA on local port: {:s}".format(self.NMEA_DATA))
+                    
+                self.NMEAdecode(data)
+
+            print("NMEA Closed...")
+            datasock.settimeout(None)
+            datasock.close()
+            
+        else:
+            print("NMEA Not used...")
         
     #----------------------------------------------------------------------------
     #   Method       man function, entry point
@@ -484,7 +505,12 @@ class t9ek80:
         sock.connect((self.UDP_IP, self.UDP_PORT))
         sock.settimeout(5.0)
         sock.send('RSI\0'.encode())  # Send reset...
-        data = sock.recv(8000)
+        try:
+            data = sock.recv(8000)
+        except socket.timeout:
+            print ("No Equipment found, make shure the IP:port is set to: {:s}:{:d}".format(self.UDP_IP,self.UDP_PORT))
+            sock.close()
+            return
 
         # Print status so far....
         print('Unit: ', data[4:8])
