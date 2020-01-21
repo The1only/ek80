@@ -1,4 +1,4 @@
-# ek80
+# EK80 SN90
 Simrad EK15/60/80 and SN90 echosounder python interface module.
 
 The t9ek80.py should normally not be modified, it contains the generic interface.
