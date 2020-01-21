@@ -18,7 +18,7 @@ Usage:
 
  cd ./ek80/examples
 
- python biomass.py biomass.xml
+ python3 biomass.py biomass.xml
 
 
 PS: All testing has been done using python3
