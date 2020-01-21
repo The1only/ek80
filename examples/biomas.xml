@@ -1,0 +1,52 @@
+
+<Configuration> 
+  <EK80> 
+    <EK80_IP>192.168.3.20</EK80_IP> 	<!-- IP address to the EK80 -->
+<!--    <EK80_IP>192.168.117.1</EK80_IP> --><!-- IP address to the EK80 -->
+    <EK80_PORT>37655</EK80_PORT> 		<!-- Fixed, only to be changed if more than one EK80 system is running on the same IP Address -->
+    <EK80_DATA>0</EK80_DATA>  			<!-- 0 = autogenerate, only set if there is a firewall issue -->
+	<DESIMATE>4</DESIMATE>				<!-- Will also be the number og elements pr. sent package -->
+	<NMEA_DATA>0</NMEA_DATA>			<!-- Set 0 to disable the use of NMEA, or set to the EK15/EK60/EK80/SN90 NMEA port -->
+  </EK80> 
+    <Request> 
+		<!-- Biomass -->
+		<type>Biomass</type>
+		<req>Integration,ChannelID=?,State=Start,Update=UpdatePing,Layertype=Surface,Range=100,Rangestart=0,Margin=0.5,SvThreshold=-70.0</req> 
+		<res>dQ</res> 
+
+		<!-- Target Strength 
+		<type>TargetStrength</type>
+		<req>TSDetection,ChannelID=?,LayerType=Surface,Range=200,RangeStart=3,MinTSValue=-55,MinEcholength=0.7,MaxEcholength=2.0,MaxGainCompensation=6.0,MaxPhasedeviation=7.0</req> 
+		<res>h600dQ</res> -->
+
+		<!-- Noise spectrum 
+		<type>NoiseSpectrum</type>
+		<req>NoiseSpectrum,ChannelID=?,Range=100,Rangestart=10,State=Start</req> 
+		<res>1000fQ</res> -->
+
+		<!-- Echogram 
+		<type>Echogram</type>
+		<req>"Echogram,PixelCount=500,ChannelID=?,Range=10,RangeStart=0"</req>  -->
+
+		<!-- BottomDetection 
+		<type>BottomDetection</type>
+		<req>BottomDetection,ChannelID=?,UpperDetectorLimit=0.5,LowerDetectorLimit=10.0,BottomBackstep=-50</req> 
+		<res>dddi</res>	-->
+		
+		<!-- Single Target Chirp detection  
+		<type>SingleTargetChirp</type>
+		<req>TSDetectionChirp,ChannelID=?,Range=100,MinTSValue=-70,LayerType=Surface,RangeStart=1,RangeBeforeTarget=0.15,RangeAfterTarget=0.15,MaxGainCompensation=3.0,MaxPhasedeviation=25.0</req>
+		<res>h</res> 						-->	<!-- Get itterator or data -->
+		<!--<resi>dddddd2f1000f1000f1000i</resi>--> 	<!-- Itteration    -->
+		<!--<ress>12056</ress> 				-->		<!-- Bytes in Itteration -->
+
+		<!-- Single Target detection 
+		<type>SingleTarget</type> 
+		<req>TSDetection,ChannelID=?,MinTSValue=-70,LayerType=Surface,Range=20,RangeStart=1,MinEcholength=0.8,MaxEcholength=1.8,MaxGainCompensation=6.0,MaxPhasedeviation=50</req> 
+		<res>h</res> 				-->			<!-- Get itterator or data -->
+		<!-- <resi>dddddd</resi> -->	<!-- Itteration    -->
+		<!--<ress>48</ress> 		-->				<!-- Bytes in Itteration -->
+		
+   </Request> 
+</Configuration> 
+
