@@ -8,8 +8,11 @@ The xml files ar config files.
 Usage:
 
  pip install --index-url https://test.pypi.org/simple/ --no-deps t9ek80
+ 
     or
+    
  simply copy the t9ek80.py to the same folder as the code you run... Thats all. 
+  
   
  git clone https://github.com/The1only/ek80.git
 
