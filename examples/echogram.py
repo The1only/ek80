@@ -59,13 +59,13 @@ class ek80(t9ek80.t9ek80):
             x = float(info[1])
             d = math.floor(x / 100)
             m = ( math.floor(x)-(d*100))/60
-            s = ((x-math.floor(x))*100)/3600
+            s = (x-math.floor(x))/60
             self.lon = d+m+s
 
             y = float(info[3])
             d = math.floor(y / 100)
             m = ( math.floor(y)-(d*100))/60
-            s = ((y-math.floor(y))*100)/3600
+            s = (y-math.floor(y))/60
             self.lat = d+m+s
 
 #-----------------------------------------------------------------------------
