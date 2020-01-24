@@ -10,8 +10,9 @@ import t9ek80
 class ek80(t9ek80.t9ek80):
     def __init__(self, argv):
         super(ek80, self).__init__(argv)
-        self.lat  = 10.492231
-        self.lon  = 59.375803
+        self.lat  = 0.0
+        self.lon  = 0.0
+        self.nmea = False
 
 #----------------------------------------------------------------------------
 #   Method       report
@@ -19,8 +20,8 @@ class ek80(t9ek80.t9ek80):
 #                It receives a list for parameters and meta data to process...
 #-----------------------------------------------------------------------------
     def report(self, Payload, Decode, timenow, mtype, desimate):
-        # If biomass mode...
-        if mtype == "Biomass":
+        # If biomass mode and we got our position...
+        if mtype == "Biomass" and self.nmea == True:
             print("Bimass: {:f} at time: {:s} at location: lat: {:d} lon: {:d}".format(Payload[1],timenow, self.lat,self.lon))
 
 #----------------------------------------------------------------------------
@@ -31,18 +32,19 @@ class ek80(t9ek80.t9ek80):
 
         # Only parse position...
         if data[0:6].decode() == "$INGLL":
+            self.nmea = True
             info = data.decode().split(",")
             
             x = float(info[1])
             d = math.floor(x / 100)
             m = ( math.floor(x)-(d*100))/60
-            s = ((x-math.floor(x))*100)/3600
+            s = (x-math.floor(x))/60
             self.lon = d+m+s
 
             y = float(info[3])
             d = math.floor(y / 100)
             m = ( math.floor(y)-(d*100))/60
-            s = ((y-math.floor(y))*100)/3600
+            s = (y-math.floor(y))/60
             self.lat = d+m+s
             
 #-----------------------------------------------------------------------------
