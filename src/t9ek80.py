@@ -17,6 +17,7 @@ import xml.etree.ElementTree as ET
 from struct import *
 from collections import namedtuple
 from pprint import pprint
+from enum import Enum
 
 # PS: Enabling debug output might in som cases delay the handling and cause errors.
 # If you start to get lost messages, disable debug and retest.
@@ -34,7 +35,6 @@ DEBUG   = False   # Adds extra print statments...
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 class t9ek80:
-
 #----------------------------------------------------------------------------
 #   Method       report
 #   Description  User defined REPORT function, this is to be adapter to individual needs.
@@ -43,18 +43,26 @@ class t9ek80:
 # For motion simulation only, to be removed...
     def __init__(self, argv):
 
+        self.error = 0  # Class Error handler...
+        
         # Data that will be read from the xml file...
         # PS: These walues will be overwritten...
         self.UDP_IP = "127.0.0.1"
         self.UDP_PORT = 37655
         self.UDP_DATA = 0
         self.desimate = 0
-        
+      
         self.NMEA_DATA = 0  # Will be set by the XML handler...
-        
+       
         # KDI_TCP_IP = "127.0.0.1"
         # KDI_TCP_PORT = 55035
         # USEKOGNIFAI =  0 #True
+
+        self.Status_Command = 1  
+        self.Status_Data = 2
+        self.Status_NMEA = 4
+        self.Status_Done = 8
+        self.Status_Running = 16
 
         # globale variable
         self.client_seq_no = 1
@@ -62,62 +70,78 @@ class t9ek80:
         self.itypeVal = ""
         self.itypeSize = 0
         self.EK_req = ""
+        self.EK_Value = 0
+        self.EK_Type = ""
         self.desimated = 0
         self.finale_data = b""
         self.mtype = ""
-        self.running = 0
+        self.running = 0 # 0x1FF when all prosesses running...
         self.totalbytes = 0
         
         self.config = "config.xml"
-
         self.busy = 0
+        self.mode = -1
+        self.cont = False
 
+        # Get extra parameters...
+        if len(argv) == 3:
+            self.mode = int(argv[2])
+            self.cont = True
+       
         # count the arguments
-        print("Initializes config file: "+argv[1])
-        arguments = len(argv)
-        if arguments == 2:
-            config = argv[1]
+        if len(argv) < 2:
+            print("Usage: python3 tescast.py config.xml [transponder]")
+            self.error = -1
+        else:
+            print("Initializes config file: "+argv[1])
+            arguments = len(argv)
+            if arguments >= 2:
+                config = argv[1]
 
-        # Open the default channel...
-        tree = ET.parse(config)
-        root = tree.getroot()
-         
-        for table in root.iter('Configuration'):
-            for child in table:
-                if child.tag == 'EK80':
-                    for child2 in child:
-                        if child2.tag == 'EK80_IP':
-                            self.UDP_IP = child2.text
-                        if child2.tag == 'EK80_PORT':
-                            self.UDP_PORT = int(child2.text)
-                        if child2.tag == 'EK80_DATA':
-                            self.UDP_DATA = int(child2.text)
-                        if child2.tag == 'NMEA_DATA':
-                            self.NMEA_DATA = int(child2.text)
-                        if child2.tag == 'DESIMATE':
-                            self.desimate = int(child2.text)
-                            
-                # if child.tag == 'Cloud':
-                    # for child2 in child:
-                        # if child2.tag == 'KDI_TCP_IP':
-                            # self.KDI_TCP_IP = child2.text
-                        # if child2.tag == 'KDI_TCP_PORT':
-                            # self.KDI_TCP_PORT = int(child2.text)
-                        # if child2.tag == 'USEKOGNIFAI':
-                            # self.USEKOGNIFAI = int(child2.text)
-                            
-                if child.tag == 'Request':
-                    for child2 in child:
-                        if child2.tag == 'req':
-                            self.EK_req = child2.text
-                        if child2.tag == 'res':
-                            self.mtypeName = child2.text
-                        if child2.tag == 'resi':
-                            self.itypeVal = child2.text
-                        if child2.tag == 'ress':
-                            self.itypeSize = int(child2.text)
-                        if child2.tag == 'type':
-                            self.mtype = child2.text
+            # Open the default channel...
+            tree = ET.parse(config)
+            root = tree.getroot()
+             
+            for table in root.iter('Configuration'):
+                for child in table:
+                    if child.tag == 'EK80':
+                        for child2 in child:
+                            if child2.tag == 'EK80_IP':
+                                self.UDP_IP = child2.text
+                            if child2.tag == 'EK80_PORT':
+                                self.UDP_PORT = int(child2.text)
+                            if child2.tag == 'EK80_DATA':
+                                self.UDP_DATA = int(child2.text)
+                            if child2.tag == 'NMEA_DATA':
+                                self.NMEA_DATA = int(child2.text)
+                            if child2.tag == 'DESIMATE':
+                                self.desimate = int(child2.text)
+                                
+                    # if child.tag == 'Cloud':
+                        # for child2 in child:
+                            # if child2.tag == 'KDI_TCP_IP':
+                                # self.KDI_TCP_IP = child2.text
+                            # if child2.tag == 'KDI_TCP_PORT':
+                                # self.KDI_TCP_PORT = int(child2.text)
+                            # if child2.tag == 'USEKOGNIFAI':
+                                # self.USEKOGNIFAI = int(child2.text)
+                                
+                    if child.tag == 'Request':
+                        for child2 in child:
+                            if child2.tag == 'req':
+                                self.EK_req = child2.text
+                            if child2.tag == 'req2':
+                                self.EK_Value = child2.text
+                            if child2.tag == 'req3':
+                                self.EK_Type = child2.text
+                            if child2.tag == 'res':
+                                self.mtypeName = child2.text
+                            if child2.tag == 'resi':
+                                self.itypeVal = child2.text
+                            if child2.tag == 'ress':
+                                self.itypeSize = int(child2.text)
+                            if child2.tag == 'type':
+                                self.mtype = child2.text
            
     #----------------------------------------------------------------------------
 
@@ -147,7 +171,8 @@ class t9ek80:
     #-----------------------------------------------------------------------------
     def subscribe(self, sock, ApplicationID, transponder, create):
         self.EK_req = self.EK_req.replace("?", transponder)
-        print(self.EK_req)
+        if DEBUG == True:
+            print(self.EK_req)
             
         if create == True:
             self.CreateSubscription(sock, ApplicationID, self.UDP_DATA,self.EK_req);
@@ -158,7 +183,9 @@ class t9ek80:
     #    Method       GetParameterValue
     #    Description  Get a set of parameters...
     #-----------------------------------------------------------------------------
-    def GetParameterValue(self, sock, ApplicationID, parameter_name ):
+    def GetParameterValue(self, sock, ApplicationID, transponder, parameter_name ):
+        parameter_name = parameter_name.replace("?", transponder)
+        
         tmp = "REQ\0{:d},1,1\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0".format(self.client_seq_no)
         tmp = tmp[0:26]
         tmp2 = "<request>" \
@@ -186,7 +213,9 @@ class t9ek80:
     #    Method       SetParameter
     #    Description  Set a set of parameterrs...
     #-----------------------------------------------------------------------------
-    def SetParameter(self, socet, ApplicationID, parameter_name, parameter_value, parameter_type ):
+    def SetParameter(self, sock, ApplicationID, transponder, parameter_name, parameter_value, parameter_type ):
+        parameter_name = parameter_name.replace("?", transponder)
+        
         tmp = "REQ\0{:d},1,1\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0".format(self.client_seq_no)
         tmp = tmp[0:26]
         tmp2 = "<request>" \
@@ -276,8 +305,9 @@ class t9ek80:
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.connect((self.UDP_IP, port))
         sock.settimeout(5.0)
+        self.running = self.running |self. Status_Command
 
-        while self.running <= 3:
+        while self.running & self.Status_Running:
 
             if len(data) >= 3:
                 if data[:3] == b'SI2':
@@ -294,8 +324,9 @@ class t9ek80:
                             data2 = data2.replace(b',',b' ')
                             data3 = data2.split()
                             ApplicationID = int(data3[1].decode())
-                            print("Get Param");
-                            self.GetParameterValue(sock,ApplicationID, "TransceiverMgr/Channels" )
+                            if DEBUG == True:
+                                print("Get Param");
+                            self.GetParameterValue(sock,ApplicationID, "", "TransceiverMgr/Channels" )
                             
                         else: # If failed the retry...
                             print('Connection failed!')
@@ -316,30 +347,40 @@ class t9ek80:
                                         element = child2.text.split(',')
 
                         if len(element) > 0:
-                            print('\n\rTransponder to use:')
-                            i = 0
-                            for e in element:
-                                print('{:d}: '.format(i) + e)
-                                i = i+1
+                            if self.mode == -1:         # If we already got a mode from command line parameter...
+                                print('\n\rTransponder to use:')
+                                i = 0
+                                for e in element:
+                                    print('{:d}: '.format(i) + e)
+                                    i = i+1
                             
-                            # If there are only one head, then select it, no question...
-                            if len(element) == 1:
-                                mode = 0
+                                # If there are only one head, then select it, no question...
+                                if len(element) == 1:   # If there is only one option...
+                                    self.mode = 0
+                                else:                   # Else let the user select...
+                                    self.mode = -1
+                                    while self.mode < 0 or self.mode > len(element):
+                                        try:
+                                            self.mode=int(input('Select Transponder: '))
+                                        except ValueError:
+                                            print ("Not a number")
                             else:
-                                mode = -1
-                                while mode < 0 or mode > len(element):
-                                    try:
-                                        mode=int(input('Select Transponder: '))
-                                    except ValueError:
-                                        print ("Not a number")
+                                print('{:d}: '.format(self.mode) + element[self.mode])
+
+                            transponder = element[self.mode]
+                            print(self.mtype)
                             
-                            transponder = element[mode]
-                            self.subscribe(sock, ApplicationID,transponder, True)
+                            if self.mtype == "Set_Param":
+                                self.SetParameter(sock, ApplicationID, transponder, self.EK_req, self.EK_Value, self.EK_Type )
+                                self.running =  self.running | self.Status_Done
+                                break
+                            else:
+                                self.subscribe(sock, ApplicationID,transponder, True)
                             
                         else:
                             if DEBUG == True:
                                 print("Received Status...")
-                            self.running = 2
+                            self.running =  self.running | self.Status_Command
                         
                     else:
                         print('Unknown response...')
@@ -370,10 +411,15 @@ class t9ek80:
                         print("Wrong data...")
             else:
                 print("EK80 error...")
+
                 
-            data = sock.recv(64000)
-                
-        self.running = 5
+            try:
+                data = sock.recv(20000)
+            except socket.timeout:
+                continue
+              
+        print("Closing command handler...")
+        self.running = self.running & ~self.Status_Command
         msg = bytearray(b'DIS\0Name:Simrad;Password:\0')
         sock.send(msg)  # Send connect...
 
@@ -396,14 +442,18 @@ class t9ek80:
         datasock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         datasock.bind(("0.0.0.0", self.UDP_DATA))
         self.UDP_DATA = datasock.getsockname()[1]
-        datasock.settimeout(120.0)
+        datasock.settimeout(5.0)
         print('EK80data  listening on port:', self.UDP_DATA)
-        self.running = 1
+        self.running = self.running | self.Status_Data
         
         # Data can in some case be received in frame sets, we then need to make shure that we start with the first frame in the set.
         # Some time we are a bit slow hens the Busy structure...
-        while self.running <= 2:
-            data = datasock.recv(20000)
+        while self.running & self.Status_Running:
+            try:
+                data = datasock.recv(50000)
+            except socket.timeout:
+                continue
+                
             Decode = unpack('<4siiHHH',data[0:18])
             
             if self.busy == 0 and Decode[4] == Decode[3]:
@@ -455,7 +505,8 @@ class t9ek80:
                     self.totalbytes = 0
                     self.busy = 0  # Ready to find next header...
           
-        self.running = 4
+        print("Closing data subscriber...")
+        self.running = self.running & ~self.Status_Data
         datasock.settimeout(None)
         datasock.close()
 
@@ -474,16 +525,16 @@ class t9ek80:
             datasock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             datasock.bind(("0.0.0.0", int(self.NMEA_DATA)))
             self.NMEA_DATA = datasock.getsockname()[1]
-            datasock.settimeout(120.0)
+            datasock.settimeout(5.0)
             print('NMEA listening on port:', self.NMEA_DATA)
-            self.running = 1
             data = b""
+            self.running = self.running | Status_NMEA
 
-            while self.running <= 2:
+            while self.running & self.Status_Running:
                 try:
                     data = datasock.recv(20000)
                 except socket.timeout:
-                    print ("No Responce from NMEA on local port: {:s}".format(self.NMEA_DATA))
+                    continue
                     
                 self.NMEAdecode(data)
 
@@ -494,12 +545,13 @@ class t9ek80:
         else:
             print("NMEA Not used...")
         
+        self.running = self.running & ~self.Status_NMEA
+        
     #----------------------------------------------------------------------------
     #   Method       man function, entry point
     #   Description  Parse the XML and get started...
     #-----------------------------------------------------------------------------
     def main(self):
-    
         # Request an port number from the EK80 to use for future comunictions. 
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.connect((self.UDP_IP, self.UDP_PORT))
@@ -524,6 +576,8 @@ class t9ek80:
         #----------------------------------------------------------------------------
         # Start comunication...
         if len(data) > 3:
+        
+            self.running = self.Status_Running # Start running...
 
             if DEBUG == True:
                 print("Start NMEA thread...")
@@ -537,32 +591,34 @@ class t9ek80:
             
             if DEBUG == True:
                 print("Awaiting Data handler ready...")
-            while self.running == 0:
+            while (self.running & self.Status_Data) == 0:
                 time.sleep(1)
                 if thread2.isAlive() == 0:
                     break
 
-            if DEBUG == True:
-                print("Start Command thread...")
-            thread1 = threading.Thread(target = self.EK80_comunicate, args = (port, data))
-            thread1.start()
-           
-            while self.running != 2:
-                time.sleep(1)
-                if thread1.isAlive() == 0:
-                    break
+            # If the data thread is running (should always be...)
+            if self.running & self.Status_Data:
+                if DEBUG == True:
+                    print("Start Command thread...")
+                thread1 = threading.Thread(target = self.EK80_comunicate, args = (port, data))
+                thread1.start()
+               
+                while (self.running & self.Status_Command) == 0 and (self.running & self.Status_Done) == 0:
+                    time.sleep(1)
+                    if thread1.isAlive() == 0:
+                        break
 
 
             # Do data handle until enter i pressed...
-            if self.running == 2:
+            if self.running & self.Status_Command and self.cont == False:
                 input('Enter to exit...')
 
             # Exit grasefully... 
             print('Stopping')
-            self.running = 3;
-            while self.running != 5:
+            time.sleep(4)
+            self.running = self.running & ~self.Status_Running;
+            while self.running & ~self.Status_Done:
                 time.sleep(1)
-                print(self.running)
            
         time.sleep(2)
         print('Stoped')
