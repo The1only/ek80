@@ -7,10 +7,11 @@ configuration files. Usage:
  
  or
     
-    simply copy the t9ek80.py 
+    copy the t9ek80.py to the local folder... 
 
-to the same folder as the code you run... Thats all.
-  
+
+Then download the examples for github.
+
   
 git clone https://github.com/The1only/ek80.git
 
