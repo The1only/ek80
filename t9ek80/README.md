@@ -19,6 +19,14 @@ cd ./ek80/examples
 
 python3 biomass.py biomass.xml 
 
+or
+
+python3 biomass.py biomass.xml 0
+
+To select transducer 0 and run automatially ( no user input required) 
+
+
+
 PS: All testing has been done using python3
 
 The Simrad EK80 user manual can be found at: https://www.simrad.online/ek80/ref_en/default.htm
