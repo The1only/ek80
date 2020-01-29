@@ -85,7 +85,6 @@ class t9ek80:
         # Get extra parameters...
         if len(argv) == 3:
             self.mode = int(argv[2])
-            self.cont = True
        
         # count the arguments
         if len(argv) < 2:
@@ -367,7 +366,7 @@ class t9ek80:
                                 print('{:d}: '.format(self.mode) + element[self.mode])
 
                             transponder = element[self.mode]
-                            print(self.mtype)
+                            #print(self.mtype)
                             
                             if self.mtype == "Set_Param":
                                 self.SetParameter(sock, ApplicationID, transponder, self.EK_req, self.EK_Value, self.EK_Type )
@@ -379,7 +378,10 @@ class t9ek80:
                         else:
                             if DEBUG == True:
                                 print("Received Status...")
-                            self.running =  self.running | self.Status_Command
+                                
+                            if self.mtype == "Set_Param":
+                                self.cont = True
+                                self.running =  self.running | self.Status_Command
                         
                     else:
                         print('Unknown response...')
@@ -476,6 +478,7 @@ class t9ek80:
                     if self.itypeSize > 0:
                         tmp = unpack("<Q"+self.mtypeName,self.finale_data[0:10])
                         timenow = datetime.datetime.utcfromtimestamp((tmp[0]/10000000)- 11644473600).strftime('%Y-%m-%dT%H:%M:%SZ')
+                        
                         self.finale_data = self.finale_data[10:]
                         Payload = []
                         if tmp[1] > 0:
@@ -527,7 +530,7 @@ class t9ek80:
             datasock.settimeout(5.0)
             print('NMEA listening on port:', self.NMEA_DATA)
             data = b""
-            self.running = self.running | Status_NMEA
+            self.running = self.running | self.Status_NMEA
 
             while self.running & self.Status_Running:
                 try:
@@ -620,5 +623,4 @@ class t9ek80:
                 time.sleep(1)
            
         time.sleep(2)
-        print('Stoped')
 
