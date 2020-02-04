@@ -16,7 +16,7 @@ class ek80(t9ek80.t9ek80):
 #   Description  User defined REPORT function, this is to be adapter to individual needs.
 #                It receives a list for parameters and meta data to process...
 #-----------------------------------------------------------------------------
-    def report(self, Payload, Decode, timenow, mtype, desimate):
+    def report(self, Payload, Decode, timenow, mtype, desimate, transponder, unit, product):
         print(Payload)
         if mtype == "Set_Param" and self.nmea == True:
             print("Set_Param: {:f} at time: {:s} at location: lat: {:d} lon: {:d}".format(Payload[1],timenow, self.lat,self.lon))

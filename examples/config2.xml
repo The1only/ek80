@@ -6,7 +6,7 @@
     <EK80_PORT>37655</EK80_PORT> 		<!-- Fixed, only to be changed if more than one EK80 system is running on the same IP Address -->
     <EK80_DATA>0</EK80_DATA>  			<!-- 0 = autogenerate, only set if there is a firewall issue -->
 	<DESIMATE>4</DESIMATE>				<!-- Will also be the number og elements pr. sent package -->
-	<NMEA_DATA>30001</NMEA_DATA>
+	<NMEA_DATA>0</NMEA_DATA>			<!-- Set 0 to disable the use of NMEA -->
   </EK80> 
     <Request> 
 		<!-- Biomass 

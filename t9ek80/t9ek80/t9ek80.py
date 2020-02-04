@@ -1,7 +1,7 @@
 # ----------------------------------------------------------------------------
-#    Method       EK80 generic v1.0
+#    Method       EK80 generic server v1.0
 #    Description  Subscribes to EK80 data depending on the config.xml file and report data.
-#                 Comunicate with the EK80/EK60/EK15
+#                 Comunicate with the EK80/EK60/EK15/SC90
 #    By:          Kongsberg Maritime AS, Terje Nilsen 2020
 #-----------------------------------------------------------------------------
 import socket
@@ -11,6 +11,7 @@ import binascii
 import threading
 import sys
 import requests
+from array import array 
 
 import xmltodict
 import xml.etree.ElementTree as ET
@@ -79,6 +80,9 @@ class t9ek80:
         self.busy = 0
         self.mode = -1
         self.cont = False
+        self.transponder = ""
+        self.unit = ""
+        self.product = ""
         
         self.debug = self.getDebug();
 
@@ -371,15 +375,15 @@ class t9ek80:
                             else:
                                 print('{:d}: '.format(self.mode) + element[self.mode])
 
-                            transponder = element[self.mode]
+                            self.transponder = element[self.mode]
                             #print(self.mtype)
                             
                             if self.mtype == "Set_Param":
-                                self.SetParameter(sock, ApplicationID, transponder, self.EK_req, self.EK_Value, self.EK_Type )
+                                self.SetParameter(sock, ApplicationID, self.transponder, self.EK_req, self.EK_Value, self.EK_Type )
                                 self.running =  self.running | self.Status_Done
                                 break
                             else:
-                                self.subscribe(sock, ApplicationID,transponder, True)
+                                self.subscribe(sock, ApplicationID,self.transponder, True)
                             
                         else:
                             if self.debug == True:
@@ -509,7 +513,7 @@ class t9ek80:
                             # for element in Payload:
                                 # print("Value:     {:f}".format(element))
                     
-                    self.report(Payload,Decode, timenow, self.mtype, self.desimate)
+                    self.report(Payload,Decode, timenow, self.mtype, self.desimate, self.transponder, self.unit, self.product)
 
                     self.finale_data = b""
                     self.totalbytes = 0
@@ -577,10 +581,15 @@ class t9ek80:
             print ("No Equipment found, make shure the IP:port is set to: {:s}:{:d}".format(self.UDP_IP,self.UDP_PORT))
             sock.close()
             return
-
+        
+#        print("".join("%02x " % b for b in data))
+#        print(data)
+        
         # Print status so far....
-        print('Unit: ', data[4:8])
-        print('ID:   ',data[272:283])
+        self.product = data[4:8].decode("utf-8") 
+        self.unit = data[272:283].decode("utf-8") 
+        print('Unit: ', self.unit)
+        print('Product:   ',self.product)
         port = self.bytes_to_int(data[264:266])
 
         # Close and reopen a new channel...

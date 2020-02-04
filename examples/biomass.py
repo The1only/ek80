@@ -6,6 +6,7 @@
 #-----------------------------------------------------------------------------
 import sys
 import t9ek80
+import math
 
 class ek80(t9ek80.t9ek80):
     def __init__(self, argv):
@@ -19,10 +20,10 @@ class ek80(t9ek80.t9ek80):
 #   Description  User defined REPORT function, this is to be adapter to individual needs.
 #                It receives a list for parameters and meta data to process...
 #-----------------------------------------------------------------------------
-    def report(self, Payload, Decode, timenow, mtype, desimate):
+    def report(self, Payload, Decode, timenow, mtype, desimate, transponder, unit, product):
         # If biomass mode and we got our position...
         if mtype == "Biomass" and self.nmea == True:
-            print("Bimass: {:f} at time: {:s} at location: lat: {:d} lon: {:d}".format(Payload[1],timenow, self.lat,self.lon))
+            print("Product: {:s} Unit: {:s} Transponder: {:s} Bimass: {:f} at time: {:s} at location: lat: {:f} lon: {:f}".format(product, unit, transponder, Payload[1],timenow, self.lat,self.lon))
 
 #----------------------------------------------------------------------------
 #    Method       EK80_data

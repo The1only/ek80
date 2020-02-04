@@ -16,7 +16,7 @@ class ek80(t9ek80.t9ek80):
 #   Description  User defined REPORT function, this is to be adapter to individual needs.
 #                It receives a list for parameters and meta data to process...
 #-----------------------------------------------------------------------------
-    def report(self, Payload, Decode, timenow, mtype, desimate):
+    def report(self, Payload, Decode, timenow, mtype, desimate, transponder, unit, product):
     
         # If single target chirp mode...
         if mtype == "SingleTargetChirp":
