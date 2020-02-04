@@ -22,8 +22,6 @@ from pprint import pprint
 # If you start to get lost messages, disable debug and retest.
 # If this helps, then remove some output messages in the EK80_data function.
 # The EK80_data function is time critical...
-DEBUG   = False   # Adds extra print statments...
-
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
@@ -81,6 +79,8 @@ class t9ek80:
         self.busy = 0
         self.mode = -1
         self.cont = False
+        
+        self.debug = self.getDebug();
 
         # Get extra parameters...
         if len(argv) == 3:
@@ -142,15 +142,19 @@ class t9ek80:
                                 self.mtype = child2.text
            
     #----------------------------------------------------------------------------
+    # Can be overide in local file...
+    def getDebug(self):
+        return False
+    
 
     # Do the reporting stuff...
     def report(Payload,Decode, timenow, mtype, desimate):
-        if DEBUG == True:
+        if self.debug == True:
             print("Missing interface module...")
 
 
     def NMEAdecode(self,data):
-        if DEBUG == True:
+        if self.debug == True:
             print("Missing NMEA interface module...")
 
     # ----------------------------------------------------------------------------
@@ -169,7 +173,7 @@ class t9ek80:
     #-----------------------------------------------------------------------------
     def subscribe(self, sock, ApplicationID, transponder, create):
         self.EK_req = self.EK_req.replace("?", transponder)
-        if DEBUG == True:
+        if self.debug == True:
             print(self.EK_req)
             
         if create == True:
@@ -315,14 +319,16 @@ class t9ek80:
                 elif data[:3] == b'RES':
                     if data[4:7] == b'CON':
                         if data[30:45] == b'ResultCode:S_OK':
-                            print('Connected...')
+                            if self.debug == True:
+                                print('Connected...')
+                                
                             data2 = data[46:].replace(b'AccessLevel:',b' ')
                             data2 = data2.replace(b'ClientID:',b' ')
                             data2 = data2.replace(b'}',b' ')
                             data2 = data2.replace(b',',b' ')
                             data3 = data2.split()
                             ApplicationID = int(data3[1].decode())
-                            if DEBUG == True:
+                            if self.debug == True:
                                 print("Get Param");
                             self.GetParameterValue(sock,ApplicationID, "", "TransceiverMgr/Channels" )
                             
@@ -332,7 +338,7 @@ class t9ek80:
                             sock.send(msg)  # Send connect...
 
                     elif data[4:7] == b'REQ':
-                        if DEBUG == True:
+                        if self.debug == True:
                             print('RES REQ received...')
                         msg = data[30:].decode("utf-8").rstrip("\0")
                         root = ET.fromstring(msg)
@@ -376,7 +382,7 @@ class t9ek80:
                                 self.subscribe(sock, ApplicationID,transponder, True)
                             
                         else:
-                            if DEBUG == True:
+                            if self.debug == True:
                                 print("Received Status...")
                                 
                             if self.mtype == "Set_Param":
@@ -390,25 +396,25 @@ class t9ek80:
                     msg = 'ALI\0ClientID:{:d},SeqNo:{:d}\0'.format(ApplicationID,self.client_seq_no)    
                     msg = bytes(msg,encoding='utf-8')
                     sock.send(msg)  # Send connect...
-                    if DEBUG == True:
+                    if self.debug == True:
                         print('.')
 
                 elif data[:3] == b'RTR':
-                    if DEBUG == True:
+                    if self.debug == True:
                         print('RTR received...')
                         print(data);
 
                 elif data[:3] == b'REQ':
-                    if DEBUG == True:
+                    if self.debug == True:
                         print('REQ received...')
                     
                 elif data[:3] == b'PRD':
-                    if DEBUG == True:
+                    if self.debug == True:
                         print('PRD received...')
                         print(data);
                     
                 else:
-                    if DEBUG == True:
+                    if self.debug == True:
                         print("Wrong data...")
             else:
                 print("EK80 error...")
@@ -419,7 +425,9 @@ class t9ek80:
             except socket.timeout:
                 continue
               
-        print("Closing command handler...")
+        if self.debug == True:
+            print("Closing command handler...")
+            
         self.running = self.running & ~self.Status_Command
         msg = bytearray(b'DIS\0Name:Simrad;Password:\0')
         sock.send(msg)  # Send connect...
@@ -437,7 +445,7 @@ class t9ek80:
         time = 0
         
         # Open the default channel...
-        if DEBUG == True:
+        if self.debug == True:
             print("Setting up data channel...")
             
         datasock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -466,7 +474,7 @@ class t9ek80:
                 if Decode[4] == Decode[3]:
                     self.busy = 1  #Busy...
                     
-                    if DEBUG == True:
+                    if self.debug == True:
                         print("\n\rHeader:     ".format(Decode[0].decode('utf-8')))
                         print(Decode[0])
                         print("SeqNo:      {:d}".format(Decode[1]))
@@ -488,7 +496,7 @@ class t9ek80:
                                 dta = self.finale_data[start:end]
                                 Payload.append(unpack("<"+self.itypeVal,self.finale_data[start:end]))
                                 
-                        if DEBUG == 2:
+                        if self.debug == 2:
                             for element in Payload:
                                 for elements in element:
                                     print("Value:     {:f}".format(elements))
@@ -497,7 +505,7 @@ class t9ek80:
                         Payload = unpack("<Q"+self.mtypeName,self.finale_data[0:self.totalbytes])
                         timenow = datetime.datetime.utcfromtimestamp((Payload[0]/10000000)- 11644473600).strftime('%Y-%m-%dT%H:%M:%SZ')
                         
-                        # if DEBUG == True:
+                        # if self.debug == True:
                             # for element in Payload:
                                 # print("Value:     {:f}".format(element))
                     
@@ -506,8 +514,10 @@ class t9ek80:
                     self.finale_data = b""
                     self.totalbytes = 0
                     self.busy = 0  # Ready to find next header...
-          
-        print("Closing data subscriber...")
+                    
+        if self.debug == True:
+            print("Closing data subscriber...")
+            
         self.running = self.running & ~self.Status_Data
         datasock.settimeout(None)
         datasock.close()
@@ -520,7 +530,7 @@ class t9ek80:
         time = 0
         
         # Open the default channel...
-        if DEBUG == True:
+        if self.debug == True:
             print("Setting up NMEA")
             
         if int(self.NMEA_DATA) > 0:
@@ -539,13 +549,15 @@ class t9ek80:
                     continue
                     
                 self.NMEAdecode(data)
-
-            print("NMEA Closed...")
+                
+            if self.debug == True:
+                print("NMEA Closed...")
             datasock.settimeout(None)
             datasock.close()
             
         else:
-            print("NMEA Not used...")
+            if self.debug == True:
+                print("NMEA Not used...")
         
         self.running = self.running & ~self.Status_NMEA
         
@@ -581,17 +593,17 @@ class t9ek80:
         
             self.running = self.Status_Running # Start running...
 
-            if DEBUG == True:
+            if self.debug == True:
                 print("Start NMEA thread...")
             thread3= threading.Thread(target = self.NMEA_data, args = (0,0))
             thread3.start()
 
-            if DEBUG == True:
+            if self.debug == True:
                 print("Start Data thread...")
             thread2= threading.Thread(target = self.EK80_data, args = (0,0))
             thread2.start()
             
-            if DEBUG == True:
+            if self.debug == True:
                 print("Awaiting Data handler ready...")
             while (self.running & self.Status_Data) == 0:
                 time.sleep(1)
@@ -600,7 +612,7 @@ class t9ek80:
 
             # If the data thread is running (should always be...)
             if self.running & self.Status_Data:
-                if DEBUG == True:
+                if self.debug == True:
                     print("Start Command thread...")
                 thread1 = threading.Thread(target = self.EK80_comunicate, args = (port, data))
                 thread1.start()
@@ -616,7 +628,9 @@ class t9ek80:
                 input('Enter to exit...')
 
             # Exit grasefully... 
-            print('Stopping')
+            if self.debug == True:
+                print('Stopping')
+                
             time.sleep(4)
             self.running = self.running & ~self.Status_Running;
             while self.running & ~self.Status_Done:
