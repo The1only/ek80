@@ -5,10 +5,16 @@
 #    By:          Kongsberg Maritime AS, Terje Nilsen 2020
 #-----------------------------------------------------------------------------
 import sys
+import glob
+import shutil
 import time
+import os
 import datetime as dt
+
 from t9ek80 import t9ek80 as ek
 
+src = r'/mnt/z/*.*'
+dest_dir = '/mnt/c/edge/in/EK80Raw'
 #-----------------------------------------------------------------------------
 class ek80(ek.t9ek80):
     def __init__(self, argv):
@@ -20,7 +26,7 @@ print('Scheduler running...')
 while 1:
     # For every 4 hour....
     print('Waiting for next run...')
-    while dt.datetime.now().hour % 4 != 0:
+    while (dt.datetime.now().hour % 4) != 0:
         time.sleep(30)
         
     run = ek80(['','startrecording.xml','0'])
@@ -33,6 +39,12 @@ while 1:
     run = ek80(['','stoprecording.xml','0'])
     run.main()
 
+    # Copy and remove files (we need the files comming from another computer to be stored on the local one-drive).
+    for file in glob.glob(src): 
+        print(file)
+        shutil.copy(file, dest_dir)
+        os.remove(file)
+
     print('Getting ready for next run...')
-    while dt.datetime.now().hour % 4 == 0:
+    while (dt.datetime.now().hour % 4) == 0:
         time.sleep(30)
