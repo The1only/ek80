@@ -5,8 +5,8 @@
 	<!--<EK80_IP>192.168.117.1</EK80_IP>-->    <!-- IP address to the EK80 -->
     <EK80_PORT>37655</EK80_PORT> 		<!-- Fixed, only to be changed if more than one EK80 system is running on the same IP Address -->
     <EK80_DATA>0</EK80_DATA>  			<!-- 0 = autogenerate, only set if there is a firewall issue -->
-	<DESIMATE>10</DESIMATE>				<!-- Will also be the number og elements pr. sent package -->
-	<NMEA_DATA>0</NMEA_DATA>			<!-- Set 0 to disable the use of NMEA -->
+	<DESIMATE>1</DESIMATE>				<!-- Will also be the number og elements pr. sent package -->
+	<NMEA_DATA>0</NMEA_DATA>		<!-- Set 0 to disable the use of NMEA -->
   </EK80> 
     <Request> 
 		<!-- Biomass
@@ -26,8 +26,8 @@
 
 		<!-- Echogram -->
 		<type>Echogram</type>
-		<req>Echogram,ChannelID=?,PixelCount=100,Range=20,RangeStart=1,TVGType=TS</req>  
-		<res>dd100h</res> -->
+		<req>Echogram,ChannelID=?,PixelCount=10,Range=100,RangeStart=1,TVGType=Sv</req>  
+		<res>dd10h</res> -->
 
 		<!-- BottomDetection 
 		<type>BottomDetection</type>

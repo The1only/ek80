@@ -63,21 +63,19 @@ class t9ek80:
         self.Status_Running = 16
 
         # globale variable
+        self.EK_req = []
+        self.EK_Value = []
+        self.EK_Type = []
+        self.mtypeName = []
+        self.itypeVal = []
+        self.itypeSize = []
+        self.mtype = []
+        
         self.client_seq_no = 1
-        self.mtypeName = ""
-        self.itypeVal = ""
-        self.itypeSize = 0
-        self.EK_req = ""
-        self.EK_Value = 0
-        self.EK_Type = ""
         self.desimated = 0
-        self.finale_data = b""
-        self.mtype = ""
         self.running = 0 # 0x1FF when all prosesses running...
-        self.totalbytes = 0
         
         self.config = "config.xml"
-        self.busy = 0
         self.mode = -1
         self.cont = False
         self.transponder = ""
@@ -129,22 +127,30 @@ class t9ek80:
                                 # self.USEKOGNIFAI = int(child2.text)
                                 
                     if child.tag == 'Request':
+                        tmp1 = tmp2 = tmp3 = tmp4 = tmp5 = tmp7 = ""
+                        tmp6 = 0
                         for child2 in child:
                             if child2.tag == 'req':
-                                self.EK_req = child2.text
+                                tmp1 = child2.text
                             if child2.tag == 'req2':
-                                self.EK_Value = child2.text
+                                tmp2 = child2.text
                             if child2.tag == 'req3':
-                                self.EK_Type = child2.text
+                                tmp3 = child2.text
                             if child2.tag == 'res':
-                                self.mtypeName = child2.text
+                                tmp4 = child2.text
                             if child2.tag == 'resi':
-                                self.itypeVal = child2.text
+                                tmp5 = child2.text
                             if child2.tag == 'ress':
-                                self.itypeSize = int(child2.text)
-                            if child2.tag == 'type':
-                                self.mtype = child2.text
-           
+                                tmp6 = int(child2.text)
+
+                        self.EK_req.append(tmp1)
+                        self.EK_Value.append(tmp2)
+                        self.EK_Type.append(tmp3)
+                        self.mtypeName.append(tmp4)
+                        self.itypeVal.append(tmp5)
+                        self.itypeSize.append(tmp6)
+                        self.mtype.append(tmp1.split(',')[0])
+                        
     #----------------------------------------------------------------------------
     # Can be overide in local file...
     def getDebug(self):
@@ -175,15 +181,16 @@ class t9ek80:
     #    Description  Adds the JSON subscription to the EK80 subscriptor.
     #                 Can create og change a subscription...
     #-----------------------------------------------------------------------------
-    def subscribe(self, sock, ApplicationID, transponder, create):
-        self.EK_req = self.EK_req.replace("?", transponder)
+    def subscribe(self, sock, ApplicationID, transponder, create, EK_req):
+    
+        EK_req = EK_req.replace("?", transponder)
         if self.debug == True:
-            print(self.EK_req)
+            print(EK_req)
             
         if create == True:
-            self.CreateSubscription(sock, ApplicationID, self.UDP_DATA,self.EK_req);
+            self.CreateSubscription(sock, ApplicationID, self.UDP_DATA,EK_req);
         else:
-            self.ChangeSubscription(sock, ApplicationID, self.UDP_DATA,self.EK_req);
+            self.ChangeSubscription(sock, ApplicationID, self.UDP_DATA,EK_req);
 
     # ----------------------------------------------------------------------------
     #    Method       GetParameterValue
@@ -378,18 +385,27 @@ class t9ek80:
                             self.transponder = element[self.mode]
                             #print(self.mtype)
                             
-                            if self.mtype == "Set_Param":
-                                self.SetParameter(sock, ApplicationID, self.transponder, self.EK_req, self.EK_Value, self.EK_Type )
+                            if self.mtype[0] == "Set_Param":
+                                offset = 0
+                                for command in self.EK_req:
+                                    self.SetParameter(sock, ApplicationID, self.transponder, command, self.EK_Value[offset], self.EK_Type[offset] )
+                                    offset = offset + 1
+                                    # We can NOT have more than one subscription on the same connection, we need to solve this on a heigher level...
+                                    # Se multirequest.py...
+                                    break 
+                                    
                                 self.running =  self.running | self.Status_Done
                                 break
                             else:
-                                self.subscribe(sock, ApplicationID,self.transponder, True)
+                                for command in self.EK_req:
+                                    self.subscribe(sock, ApplicationID,self.transponder, True, command)
+                                    time.sleep(1)
                             
                         else:
                             if self.debug == True:
                                 print("Received Status...")
                                 
-                            if self.mtype == "Set_Param":
+                            if self.mtype[0] == "Set_Param":
                                 self.cont = True
                                 self.running =  self.running | self.Status_Command
                         
@@ -446,7 +462,8 @@ class t9ek80:
     #-----------------------------------------------------------------------------
      
     def EK80_data(self,a,b):
-        time = 0
+        finale_data = b""
+        totalbytes = 0
         
         # Open the default channel...
         if self.debug == True:
@@ -460,7 +477,6 @@ class t9ek80:
         self.running = self.running | self.Status_Data
         
         # Data can in some case be received in frame sets, we then need to make shure that we start with the first frame in the set.
-        # Some time we are a bit slow hens the Busy structure...
         while self.running & self.Status_Running:
             try:
                 data = datasock.recv(50000)
@@ -468,56 +484,16 @@ class t9ek80:
                 continue
                 
             Decode = unpack('<4siiHHH',data[0:18])
+            finale_data = finale_data+data[18:]
+            totalbytes = totalbytes + Decode[5]
+
+            if Decode[4] == Decode[3]:
             
-            if self.busy == 0 and Decode[4] == Decode[3]:
-                self.busy = 2 # Ready from next...
-            else:    
-                self.finale_data = self.finale_data+data[18:]
-                self.totalbytes = self.totalbytes + Decode[5]
-
-                if Decode[4] == Decode[3]:
-                    self.busy = 1  #Busy...
-                    
-                    if self.debug == True:
-                        print("\n\rHeader:     ".format(Decode[0].decode('utf-8')))
-                        print(Decode[0])
-                        print("SeqNo:      {:d}".format(Decode[1]))
-                        print("SubID:      {:d}".format(Decode[2]))
-                        print("CurrentMsg: {:d}".format(Decode[3]))
-                        print("TotalMsg:   {:d}".format(Decode[4]))
-                        print("NoOfBytes:  {:d}".format(Decode[5]))
+                thread= threading.Thread(target = self.DecodeReceived, args = (finale_data,totalbytes, Decode))
+                thread.start()
                 
-                    if self.itypeSize > 0:
-                        tmp = unpack("<Q"+self.mtypeName,self.finale_data[0:10])
-                        timenow = datetime.datetime.utcfromtimestamp((tmp[0]/10000000)- 11644473600).strftime('%Y-%m-%dT%H:%M:%SZ')
-                        
-                        self.finale_data = self.finale_data[10:]
-                        Payload = []
-                        if tmp[1] > 0:
-                            for loop in range(0,tmp[1]):
-                                start = loop*self.itypeSize
-                                end = (loop*self.itypeSize)+self.itypeSize
-                                dta = self.finale_data[start:end]
-                                Payload.append(unpack("<"+self.itypeVal,self.finale_data[start:end]))
-                                
-                        if self.debug == 2:
-                            for element in Payload:
-                                for elements in element:
-                                    print("Value:     {:f}".format(elements))
-                            
-                    else:
-                        Payload = unpack("<Q"+self.mtypeName,self.finale_data[0:self.totalbytes])
-                        timenow = datetime.datetime.utcfromtimestamp((Payload[0]/10000000)- 11644473600).strftime('%Y-%m-%dT%H:%M:%SZ')
-                        
-                        # if self.debug == True:
-                            # for element in Payload:
-                                # print("Value:     {:f}".format(element))
-                    
-                    self.report(Payload,Decode, timenow, self.mtype, self.desimate, self.transponder, self.unit, self.product)
-
-                    self.finale_data = b""
-                    self.totalbytes = 0
-                    self.busy = 0  # Ready to find next header...
+                finale_data = b""
+                totalbytes = 0
                     
         if self.debug == True:
             print("Closing data subscriber...")
@@ -530,12 +506,50 @@ class t9ek80:
     #   Method       man function, entry point
     #   Description  Parse the XML and get started...
     #-----------------------------------------------------------------------------
+    def  DecodeReceived(self, finale_data, totalbytes, Decode):
+                
+        if self.debug == True:
+            print("\n\rHeader:     ".format(Decode[0].decode('utf-8')))
+            print(Decode[0])
+            print("SeqNo:      {:d}".format(Decode[1]))
+            print("SubID:      {:d}".format(Decode[2]))
+            print("CurrentMsg: {:d}".format(Decode[3]))
+            print("TotalMsg:   {:d}".format(Decode[4]))
+            print("NoOfBytes:  {:d}".format(Decode[5]))
+    
+        if self.itypeSize[0] > 0:
+            tmp = unpack("<Q"+self.mtypeName[0],finale_data[0:10])
+            timenow = datetime.datetime.utcfromtimestamp((tmp[0]/10000000)- 11644473600).strftime('%Y-%m-%dT%H:%M:%SZ')
+            
+            finale_data = finale_data[10:]
+            Payload = []
+            if tmp[1] > 0:
+                for loop in range(0,tmp[1]):
+                    start = loop*self.itypeSize[0]
+                    end = (loop*self.itypeSize[0])+self.itypeSize[0]
+                    dta = finale_data[start:end]
+                    Payload.append(unpack("<"+self.itypeVal[0],finale_data[start:end]))
+                    
+            if self.debug == 2:
+                for element in Payload:
+                    for elements in element:
+                        print("Value:     {:f}".format(elements))
+                        
+        else:
+            Payload = unpack("<Q"+self.mtypeName[0],finale_data[0:totalbytes])
+            timenow = datetime.datetime.utcfromtimestamp((Payload[0]/10000000)- 11644473600).strftime('%Y-%m-%dT%H:%M:%SZ')
+
+        self.report(Payload,Decode, timenow, self.mtype[0], self.desimate, self.transponder, self.unit, self.product)
+
+    #----------------------------------------------------------------------------
+    #   Method       man function, entry point
+    #   Description  Parse the XML and get started...
+    #-----------------------------------------------------------------------------
     def NMEA_data(self,a,b):
-        time = 0
-        
+       
         # Open the default channel...
         if self.debug == True:
-            print("Setting up NMEA")
+            print("Setting up NMEA ", self.NMEA_DATA)
             
         if int(self.NMEA_DATA) > 0:
             datasock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -637,8 +651,8 @@ class t9ek80:
                 input('Enter to exit...')
 
             # Exit grasefully... 
-            if self.debug == True:
-                print('Stopping')
+#            if self.debug == True:
+            print('Stopping')
                 
             time.sleep(4)
             self.running = self.running & ~self.Status_Running;

@@ -1,16 +1,16 @@
 
 <Configuration> 
   <EK80> 
+      <EK80_IP>127.0.0.1</EK80_IP>  	<!-- IP address to the EK80 -->
  <!--   <EK80_IP>192.168.3.20</EK80_IP> -->	<!-- IP address to the EK80 -->
-    <EK80_IP>192.168.117.1</EK80_IP>    <!-- IP address to the EK80 -->
     <EK80_PORT>37655</EK80_PORT> 		<!-- Fixed, only to be changed if more than one EK80 system is running on the same IP Address -->
     <EK80_DATA>0</EK80_DATA>  			<!-- 0 = autogenerate, only set if there is a firewall issue, or more software instances on one computer -->
-	<DESIMATE>4</DESIMATE>				<!-- Will also be the number og elements pr. sent package -->
+	<DESIMATE>5</DESIMATE>				<!-- Will also be the number og elements pr. sent package -->
 	<NMEA_DATA>20001</NMEA_DATA>			<!-- Set 0 to disable the use of NMEA, or set to the EK15/EK60/EK80/SN90 NMEA port -->
   </EK80> 
     <Request> 
 		<!-- Biomass -->
-		<type>Biomass</type>
+		<type>Biomass or whatever test, not used...</type>
 		<req>Integration,ChannelID=?,State=Start,Update=UpdatePing,Layertype=Surface,Range=100,Rangestart=0,Margin=0.5,SvThreshold=-70.0</req> 
 		<res>dQ</res> 
 

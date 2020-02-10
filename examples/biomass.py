@@ -14,7 +14,11 @@ class ek80(t9ek80.t9ek80):
         self.lat  = 0.0
         self.lon  = 0.0
         self.nmea = False
-
+        
+#-----------------------------------------------------------------------------
+# Override the function getDebug to select lovally, defaut if no overide is False. 
+    def getDebug(self):
+        return False
 #----------------------------------------------------------------------------
 #   Method       report
 #   Description  User defined REPORT function, this is to be adapter to individual needs.
@@ -22,7 +26,7 @@ class ek80(t9ek80.t9ek80):
 #-----------------------------------------------------------------------------
     def report(self, Payload, Decode, timenow, mtype, desimate, transponder, unit, product):
         # If biomass mode and we got our position...
-        if mtype == "Biomass" and self.nmea == True:
+        if mtype == "Integration" and self.nmea == True:
             print("Product: {:s} Unit: {:s} Transponder: {:s} Bimass: {:f} at time: {:s} at location: lat: {:f} lon: {:f}".format(product, unit, transponder, Payload[1],timenow, self.lat,self.lon))
 
 #----------------------------------------------------------------------------
@@ -49,6 +53,7 @@ class ek80(t9ek80.t9ek80):
             self.lat = d+m+s
             
 #-----------------------------------------------------------------------------
+
 # The main code....
 run = ek80(sys.argv)
 run.main()
