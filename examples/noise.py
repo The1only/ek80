@@ -12,7 +12,10 @@ import numpy as np
 class ek80(t9ek80.t9ek80):
     def __init__(self, argv):
         super(ek80, self).__init__(argv)
-
+#-----------------------------------------------------------------------------
+# Override the function getDebug, defaut if no overide is False. 
+    def getDebug(self):
+        return False
 #----------------------------------------------------------------------------
 #   Method       report
 #   Description  User defined REPORT function, this is to be adapter to individual needs.

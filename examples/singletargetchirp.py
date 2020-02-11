@@ -19,16 +19,16 @@ class ek80(t9ek80.t9ek80):
     def report(self, Payload, Decode, timenow, mtype, desimate, transponder, unit, product):
     
         # If single target chirp mode...
-        if mtype == "SingleTargetChirp":
-            print("------------------------------")
-            print("SingleTargetChirp");
+        if mtype == "TSDetectionChirp":
+#            print("------------------------------")
+#            print("TSDetectionChirp");
             for element in Payload:
                 print("Time:    {:s}   Depth:   {:f}   Forward: {:f}   Side:    {:f}   Sa:      {:f}"\
                     .format(timenow,element[0],element[3],element[4],element[5]))
 
-        if mtype == "SingleTarget":
+        if mtype == "TSDetection":
             print("------------------------------")
-            print("SingleTarget");
+#            print("TSDetection");
             for element in Payload:
                 print("Time:    {:s}   Depth:   {:f}   Forward: {:f}   Side:    {:f}   Sa:      {:f}"\
                     .format(timenow,element[0],element[3],element[4],element[5]))

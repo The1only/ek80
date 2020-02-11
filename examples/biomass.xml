@@ -10,7 +10,7 @@
   </EK80> 
     <Request> 
 		<!-- Biomass -->
-		<type>Biomass or whatever test, not used...</type>
+		<type>Biomass or whatever text, this line is no longer used...</type>
 		<req>Integration,ChannelID=?,State=Start,Update=UpdatePing,Layertype=Surface,Range=100,Rangestart=0,Margin=0.5,SvThreshold=-70.0</req> 
 		<res>dQ</res> 
 

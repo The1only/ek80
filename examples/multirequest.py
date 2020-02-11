@@ -23,7 +23,7 @@ class ek80(t9ek80.t9ek80):
         self.biomas = 0
         
 #-----------------------------------------------------------------------------
-# Override the function getDebug to select lovally, defaut if no overide is False. 
+# Override the function getDebug, defaut if no overide is False. 
     def getDebug(self):
         return False
 #----------------------------------------------------------------------------
@@ -48,7 +48,7 @@ class ek80_1(t9ek80.t9ek80):
         self.depth = 0
         
 #-----------------------------------------------------------------------------
-# Override the function getDebug to select lovally, defaut if no overide is False. 
+# Override the function getDebug, defaut if no overide is False. 
     def getDebug(self):
         return False
 #----------------------------------------------------------------------------
@@ -78,7 +78,7 @@ class ek80_2(t9ek80.t9ek80):
         self.depth = 0
 
 #-----------------------------------------------------------------------------
-# Override the function getDebug to select lovally, defaut if no overide is False. 
+# Override the function getDebug, defaut if no overide is False. 
     def getDebug(self):
         return False
 
@@ -90,7 +90,8 @@ class ek80_2(t9ek80.t9ek80):
     def report(self, Payload, Decode, timenow, mtype, desimate, transponder, unit, product):
     
         # If single target chirp mode...
-        if mtype == "Echogram" and (self.count % desimate) == 0:
+        if desimate == 0: desimate = 1  # Avoid divide by zero...
+        if mtype == "Echogram" and (self.count % desimate) == 0 and self.nmea == True:
             
             # Payload = Payload[3:]
             # plt.clf()
@@ -104,9 +105,9 @@ class ek80_2(t9ek80.t9ek80):
             print("Product: {:s} Unit: {:s} Transponder: {:s}".format(product, unit, transponder))
             print("Bimass:  {:f}".format(self.biomas))
             print("Depth:   {:f}".format(self.depth))
-            print("\nEchogram");
             print("Time:    {:s}   Range:   {:f}   RangeStart: {:f} Position: Lat: {:f} Lon: {:f}".format(timenow,Payload[1],Payload[2],self.lat,self.lon))
 
+            print("\nEchogram");
             Payload = Payload[3:]
             print("Bio1: {:f} Bio2: {:f} Bio3: {:f} Bio4: {:f} Bio5: {:f} Bio6: {:f} Bio7: {:f} Bio8: {:f} Bio9: {:f} Bio10: {:f}"\
                .format(Payload[0],Payload[1],Payload[2],Payload[3],Payload[4],Payload[5],Payload[6],Payload[7],Payload[8],Payload[9]))
@@ -123,8 +124,9 @@ class ek80_2(t9ek80.t9ek80):
 
     def NMEAdecode(self,data):
 
-        # Only parse position...
+      # Only parse position...
         if data[0:6].decode() == "$INGLL":
+            self.nmea = True
             info = data.decode().split(",")
             
             x = float(info[1])
@@ -138,25 +140,31 @@ class ek80_2(t9ek80.t9ek80):
             m = ( math.floor(y)-(d*100))/60
             s = (y-math.floor(y))/60
             self.lat = d+m+s
-
-#-----------------------------------------------------------------------------
             
 #-----------------------------------------------------------------------------
+#-----------------------------------------------------------------------------
+# PS: Remember that if you use NMEA, then every instance of t9ek80 will take one port eatch...
+# Normally set NMEA port to 0 for Biomass and Bottom, and 20001 for Echogram in this test...
 
 print(sys.argv)
 # The main code....
 
-if len(sys.argv) >= 5:
-    r1 = [sys.argv[0]]+[sys.argv[1]]+[sys.argv[4]]
-    r2 = [sys.argv[0]]+[sys.argv[2]]+[sys.argv[4]]
-    r3 = [sys.argv[0]]+[sys.argv[3]]+[sys.argv[4]]
-elif len(sys.argv) >= 4:
-    r1 = [sys.argv[0]]+[sys.argv[1]]
-    r2 = [sys.argv[0]]+[sys.argv[2]]
-    r3 = [sys.argv[0]]+[sys.argv[3]]
-else:
-    print("Usage: python3 multuirequest.py file1.xml file2.xml [Transponder]")
-    print("Example: python3 multirequest.py bimoas.xml echogram.xml 0")
+# if len(sys.argv) >= 5:
+    # r1 = [sys.argv[0]]+[sys.argv[1]]+[sys.argv[4]]
+    # r2 = [sys.argv[0]]+[sys.argv[2]]+[sys.argv[4]]
+    # r3 = [sys.argv[0]]+[sys.argv[3]]+[sys.argv[4]]
+# elif len(sys.argv) >= 4:
+    # r1 = [sys.argv[0]]+[sys.argv[1]]
+    # r2 = [sys.argv[0]]+[sys.argv[2]]
+    # r3 = [sys.argv[0]]+[sys.argv[3]]
+# else:
+    # print("Usage: python3 multuirequest.py file1.xml file2.xml [Transponder]")
+    # print("Example: python3 multirequest.py bimoas.xml echogram.xml 0")
+
+r1 = ['multirequest','biomass.xml','0']
+r2 = ['multirequest','bottom.xml','0']
+r3 = ['multirequest','echogram.xml','0']
+
 
 run = ek80(r1)
 run_1 = ek80_1(r2)

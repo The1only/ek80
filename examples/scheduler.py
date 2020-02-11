@@ -19,7 +19,11 @@ dest_dir = '/mnt/c/edge/in/EK80Raw'
 class ek80(ek.t9ek80):
     def __init__(self, argv):
         super(ek80, self).__init__(argv)
-       
+
+    # Override the function getDebug, defaut if no overide is False. 
+    def getDebug(self):
+        return False #True
+
 #-----------------------------------------------------------------------------
 print('Scheduler running...')
 

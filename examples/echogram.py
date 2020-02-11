@@ -16,7 +16,12 @@ class ek80(t9ek80.t9ek80):
         self.lat  = 10.492231
         self.lon  = 59.375803
         self.count= 0
-
+        
+#-----------------------------------------------------------------------------
+# Override the function getDebug, defaut if no overide is False. 
+    def getDebug(self):
+        return False
+        
 #----------------------------------------------------------------------------
 #   Method       report
 #   Description  User defined REPORT function, this is to be adapter to individual needs.
@@ -25,11 +30,13 @@ class ek80(t9ek80.t9ek80):
     def report(self, Payload, Decode, timenow, mtype, desimate, transponder, unit, product):
     
         # If single target chirp mode...
+        if desimate == 0: desimate = 1  # Avoid divide by zero...
         if mtype == "Echogram" and (self.count % desimate) == 0:
             Payload = Payload[3:]
+            
             plt.clf()
-            t = np.arange(0.0, len(Payload), 1)
-            plt.plot(t,Payload)
+            t = np.arange(0.0, len(Payload)-1, 1)
+            plt.plot(t,Payload[1:])
             plt.rcParams['axes.unicode_minus'] = True
             plt.title('About as simple as it gets, folks')
             plt.pause(0.05)
