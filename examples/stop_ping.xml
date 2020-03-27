@@ -6,9 +6,8 @@
   </EK80> 
     <Request> 
 		<type>Set_Param</type>
-		<req>SounderStorageManager/SaveRawData</req> 
-		<req2>1</req2> 
-		<req3>3</req3> 
+		<req>OperationControl/MainOperation</req> 
+		<req2>Inactive</req2> 
    </Request> 
 </Configuration> 
 

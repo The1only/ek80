@@ -6,6 +6,7 @@
 #-----------------------------------------------------------------------------
 import sys
 import t9ek80
+import pymatlab
 
 class ek80(t9ek80.t9ek80):
     def __init__(self, argv):
@@ -20,7 +21,7 @@ class ek80(t9ek80.t9ek80):
     
         # If single target chirp mode...
         if mtype == "TSDetectionChirp":
-#            print("------------------------------")
+            print("------------------------------")
 #            print("TSDetectionChirp");
             for element in Payload:
                 print("Time:    {:s}   Depth:   {:f}   Forward: {:f}   Side:    {:f}   Sa:      {:f}"\
@@ -35,6 +36,12 @@ class ek80(t9ek80.t9ek80):
 
 #-----------------------------------------------------------------------------
 # The main code....
+
+#eng = matlab.engine.start_matlab()
+#ret = eng.triarea(2,5)   #sending input to the function
+#print("Triarea : ")
+#print(ret)
+
 run = ek80(sys.argv)
 run.main()
 print("Done!")
