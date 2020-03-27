@@ -8,6 +8,7 @@
 		<type>Set_Param</type>
 		<req>OperationControl/MainOperation</req> 
 		<req2>Normal</req2> 
+		<req3>3</req3>
    </Request> 
 </Configuration> 
 
