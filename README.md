@@ -3,7 +3,7 @@ Simrad EK15/60/80 and SN90 echosounder python interface module. The t9ek80.py sh
 it contains the generic interface. The biomass and singletargetchirp are example user files. The xml files are 
 configuration files. Usage:
 
-    pip install t9ek80
+    pip install t9ek80. ( NOT RECOMENDED AT THE MOMENT NEEDS UPDATES:::: )
  
  or
     
