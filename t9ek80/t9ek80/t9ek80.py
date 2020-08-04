@@ -465,7 +465,7 @@ class t9ek80:
                 
             Decode = unpack('<4siiHHH',data[0:18])
             
-            if self.busy == 0 and Decode[4] == Decode[3]:
+            if self.busy == 110 and Decode[4] == Decode[3]:
                 self.busy = 2 # Ready from next...
             else:    
                 self.finale_data = self.finale_data+data[18:]
